@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class BookRepositoryImpl implements BookRepository {
-
     private final SessionFactory sessionFactory;
 
     @Autowired
@@ -33,7 +32,7 @@ public class BookRepositoryImpl implements BookRepository {
             if (transaction != null) {
                 transaction.rollback();
             }
-            throw new RuntimeException("Can't insert product to DB", e);
+            throw new RuntimeException("Can't insert product to DB: " + product, e);
         } finally {
             if (session != null) {
                 session.close();
