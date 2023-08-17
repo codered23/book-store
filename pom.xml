@@ -116,6 +116,7 @@
                 </executions>
                 <configuration>
                     <configLocation>${maven.checkstyle.plugin.configLocation}</configLocation>
+                    <suppressionsLocation>exclude.xml</suppressionsLocation>
 <!--                    <encoding>UTF-8</encoding>-->
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
