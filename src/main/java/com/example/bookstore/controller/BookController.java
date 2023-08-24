@@ -1,7 +1,7 @@
 package com.example.bookstore.controller;
 
 import com.example.bookstore.dto.BookDto;
-import com.example.bookstore.dto.BookSearchParameters;
+import com.example.bookstore.dto.BookSearchParams;
 import com.example.bookstore.dto.CreateBookRequestDto;
 import com.example.bookstore.service.BookService;
 import java.util.List;
@@ -50,7 +50,7 @@ public class BookController {
     }
 
     @GetMapping("/search")
-    public List<BookDto> search(BookSearchParameters bookSearchParameters) {
+    public List<BookDto> search(BookSearchParams bookSearchParameters) {
         return bookService.search(bookSearchParameters);
     }
 }

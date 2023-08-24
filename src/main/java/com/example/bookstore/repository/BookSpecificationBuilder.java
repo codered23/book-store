@@ -1,6 +1,6 @@
 package com.example.bookstore.repository;
 
-import com.example.bookstore.dto.BookSearchParameters;
+import com.example.bookstore.dto.BookSearchParams;
 import com.example.bookstore.model.Book;
 import com.example.bookstore.repository.specifications.AuthorSpecificationProvider;
 import com.example.bookstore.repository.specifications.PriceSpecificationProvider;
@@ -11,16 +11,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class BookSpecificationBuilder implements SpecificationBuilder<Book> {
     @Override
-    public Specification<Book> build(BookSearchParameters searchParameters) {
+    public Specification<Book> build(BookSearchParams searchParameters) {
         Specification<Book> spec = Specification.where(null);
-        if (searchParameters.authors() != null && searchParameters.authors().length > 0) {
+        if (searchParameters.getAuthors() != null && searchParameters.getAuthors().length > 0) {
             spec = spec.and(AuthorSpecificationProvider
-                    .getSpecification(searchParameters.authors()));
+                    .getSpecification(searchParameters.getAuthors()));
 
         }
-        if (searchParameters.minPrice() != null && searchParameters.maxPrice() != null) {
-            BigDecimal minPrice = searchParameters.minPrice();
-            BigDecimal maxPrice = searchParameters.maxPrice();
+        if (searchParameters.getMinPrice() != null && searchParameters.getMaxPrice() != null) {
+            BigDecimal minPrice = searchParameters.getMinPrice();
+            BigDecimal maxPrice = searchParameters.getMaxPrice();
             if (minPrice.compareTo(BigDecimal.ZERO) >= 0
                     && maxPrice.compareTo(BigDecimal.ZERO) >= 0) {
                 spec = spec.and(PriceSpecificationProvider
