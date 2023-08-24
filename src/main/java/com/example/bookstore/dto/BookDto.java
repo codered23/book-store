@@ -12,4 +12,5 @@ public class BookDto {
     private String isbn;
     private String description;
     private String coverImage;
+    private boolean isDeleted = false;
 }
