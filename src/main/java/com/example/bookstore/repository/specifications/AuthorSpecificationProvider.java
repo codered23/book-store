@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 public class AuthorSpecificationProvider {
     public static Specification<Book> getSpecification(String[] authors) {
         return (root, query, criteriaBuilder) ->
-                root.get("author").in(Arrays.stream(authors).toArray());
+             root.get("author").in(Arrays.stream(authors).toArray());
     }
-
 }
