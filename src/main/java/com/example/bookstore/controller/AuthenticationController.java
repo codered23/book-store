@@ -6,7 +6,7 @@ import com.example.bookstore.dto.UserRegistrationRequestDto;
 import com.example.bookstore.dto.UserRegistrationResponseDto;
 import com.example.bookstore.exception.RegistrationException;
 import com.example.bookstore.mapper.UserMapper;
-import com.example.bookstore.service.UserService;
+import com.example.bookstore.service.AuthenticationService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,22 +17,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthenticationController {
     private final UserMapper mapper;
-    private final UserService userService;
+    private final AuthenticationService authenticationService;
 
-    public AuthenticationController(UserMapper mapper, UserService userService) {
+    public AuthenticationController(UserMapper mapper, AuthenticationService userService) {
         this.mapper = mapper;
-        this.userService = userService;
+        this.authenticationService = userService;
     }
 
     @PostMapping("/login")
     public UserLoginResponseDto login(@RequestBody @Valid UserLoginRequestDto request) {
-        return userService.login(request);
+        return authenticationService.login(request);
     }
 
     @PostMapping("/register")
     public UserRegistrationResponseDto register(@RequestBody @Valid
                                                     UserRegistrationRequestDto request)
             throws RegistrationException {
-        return userService.register(request);
+        return authenticationService.register(request);
     }
 }

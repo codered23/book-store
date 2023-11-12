@@ -1,10 +1,9 @@
 package com.example.bookstore.validation;
 
-import com.example.bookstore.exception.RegistrationException;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public final class FieldMatchValidator implements ConstraintValidator <FieldMatch, Object>{
+public final class FieldMatchValidator implements ConstraintValidator<FieldMatch, Object> {
     private String firstFieldName;
     private String secondFieldName;
 
@@ -20,12 +19,15 @@ public final class FieldMatchValidator implements ConstraintValidator <FieldMatc
         final Object secondtObject = getValue(value, secondFieldName);
         if (firstObject != null) {
             return firstObject.equals(secondtObject);
-        } else return secondtObject == null;
+        } else {
+            return secondtObject == null;
+        }
     }
 
     private Object getValue(Object value, String fieldName) {
         try {
-            final Object Object = org.springframework.beans.BeanUtils.getPropertyDescriptor(value.getClass(), fieldName)
+            final Object Object = org.springframework.beans
+                    .BeanUtils.getPropertyDescriptor(value.getClass(), fieldName)
                     .getReadMethod().invoke(value);
             return Object;
         } catch (final Exception e) {
