@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthorSpecificationProvider {
     public static Specification<Book> getSpecification(String[] authors) {
+        String author = "author";
         return (root, query, criteriaBuilder) ->
-             root.get("author").in(Arrays.stream(authors).toArray());
+             root.get(author).in(Arrays.stream(authors).toArray());
     }
 }
