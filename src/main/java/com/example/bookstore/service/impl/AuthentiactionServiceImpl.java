@@ -30,8 +30,7 @@ public class AuthentiactionServiceImpl implements AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     @Override
-    public UserRegistrationResponseDto register(UserRegistrationRequestDto requestDto)
-            throws RegistrationException {
+    public UserRegistrationResponseDto register(UserRegistrationRequestDto requestDto) {
         if (userRepository.findByEmail(requestDto.getEmail()).isPresent()) {
             throw new RegistrationException(
                     "Unable to complete registration");

@@ -39,12 +39,11 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers("/api/auth/**")
+                                .requestMatchers("/api/auth/**", "/swagger*/**")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated()
                 )
-                //.formLogin(withDefaults())
                 .httpBasic(withDefaults())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
