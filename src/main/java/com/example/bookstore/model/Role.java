@@ -22,7 +22,8 @@ public class Role {
     private RoleName roleName;
 
     public enum RoleName {
-        USER, ADMIN
+        USER,
+        ADMIN
     }
 
     public String getName() {
