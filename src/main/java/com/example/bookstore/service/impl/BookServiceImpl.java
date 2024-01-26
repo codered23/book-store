@@ -1,6 +1,7 @@
 package com.example.bookstore.service.impl;
 
 import com.example.bookstore.dto.BookDto;
+import com.example.bookstore.dto.BookDtoWithoutCategoryIds;
 import com.example.bookstore.dto.BookSearchParams;
 import com.example.bookstore.dto.CreateBookRequestDto;
 import com.example.bookstore.mapper.BookMapper;
@@ -9,7 +10,6 @@ import com.example.bookstore.repository.BookRepository;
 import com.example.bookstore.repository.BookSpecificationBuilder;
 import com.example.bookstore.service.BookService;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -39,7 +39,7 @@ public class BookServiceImpl implements BookService {
     public List<BookDto> findAll(Pageable pageable) {
         return bookRepository.findAll(pageable).stream()
                 .map(bookMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -65,6 +65,13 @@ public class BookServiceImpl implements BookService {
         return bookRepository.findAll(bookSpecification, pageable)
                 .stream()
                 .map(bookMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    public List<BookDtoWithoutCategoryIds> findAllByCategoryId(Long id) {
+        return bookRepository.findAllByCategoriesId(id).stream()
+                .map(bookMapper::toDtoWithoutCategories)
                 .toList();
     }
 }

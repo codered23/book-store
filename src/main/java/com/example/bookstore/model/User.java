@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,8 +23,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Entity
 @Data
 @Table(name = "users")
-@SQLDelete(sql = "UPDATE User SET is_deleted = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE users SET is_deleted = true WHERE id = ?")
 @Where(clause = "is_deleted = false")
+@NoArgsConstructor
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -77,13 +79,5 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getPassword() {
-        return this.password;
     }
 }
