@@ -1,10 +1,6 @@
 package com.example.bookstore.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -20,5 +16,6 @@ public class Category {
     private Long id;
     private String name;
     private String description;
-    private boolean isDeleted = false;
+    @Column(columnDefinition = "BOOLEAN DEFAULT false")
+    private boolean isDeleted;
 }

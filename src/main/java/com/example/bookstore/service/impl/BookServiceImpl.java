@@ -1,9 +1,9 @@
 package com.example.bookstore.service.impl;
 
-import com.example.bookstore.dto.BookDto;
-import com.example.bookstore.dto.BookDtoWithoutCategoryIds;
-import com.example.bookstore.dto.BookSearchParams;
-import com.example.bookstore.dto.CreateBookRequestDto;
+import com.example.bookstore.dto.book.BookDto;
+import com.example.bookstore.dto.book.BookDtoWithoutCategoryIds;
+import com.example.bookstore.dto.book.BookSearchParams;
+import com.example.bookstore.dto.book.CreateBookRequestDto;
 import com.example.bookstore.mapper.BookMapper;
 import com.example.bookstore.model.Book;
 import com.example.bookstore.repository.BookRepository;
