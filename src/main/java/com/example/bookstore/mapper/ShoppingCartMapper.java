@@ -4,14 +4,12 @@ import com.example.bookstore.config.MapperConfig;
 import com.example.bookstore.dto.cart.ShoppingCartDto;
 import com.example.bookstore.model.CartItem;
 import com.example.bookstore.model.ShoppingCart;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Mapper(config = MapperConfig.class)
 public interface ShoppingCartMapper {
@@ -27,7 +25,6 @@ public interface ShoppingCartMapper {
                     .map(CartItem::getId)
                     .collect(Collectors.toSet());
             dto.setCartItemIds(cartItems);
-            dto.setCartItemIds(new HashSet<>());
         }
     }
 }

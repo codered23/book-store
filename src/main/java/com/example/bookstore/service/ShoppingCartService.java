@@ -7,9 +7,12 @@ import org.springframework.security.core.Authentication;
 
 public interface ShoppingCartService {
     ShoppingCartDto addToCart(Authentication authentication, AddItemToCartRequest dto);
+
     ShoppingCartDto getByUser(Authentication authentication);
+
     ShoppingCartDto updateCartItem(Authentication authentication,
                                    Long itemId,
                                    UpdateItemRequest dto);
+
     ShoppingCartDto deleteCartItem(Long itemId, Authentication authentication);
 }
