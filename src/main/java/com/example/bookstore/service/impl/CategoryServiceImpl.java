@@ -1,7 +1,7 @@
 package com.example.bookstore.service.impl;
 
-import com.example.bookstore.dto.CategoryDto;
-import com.example.bookstore.dto.CategoryRequestDto;
+import com.example.bookstore.dto.category.CategoryDto;
+import com.example.bookstore.dto.category.CategoryRequestDto;
 import com.example.bookstore.mapper.CategoryMapper;
 import com.example.bookstore.model.Category;
 import com.example.bookstore.repository.CategoryRepository;

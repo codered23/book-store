@@ -1,4 +1,4 @@
-package com.example.bookstore.dto;
+package com.example.bookstore.dto.book;
 
 import java.math.BigDecimal;
 import lombok.Data;
@@ -12,5 +12,5 @@ public class BookDtoWithoutCategoryIds {
     private String isbn;
     private String description;
     private String coverImage;
-    private boolean isDeleted = false;
+    private boolean isDeleted;
 }

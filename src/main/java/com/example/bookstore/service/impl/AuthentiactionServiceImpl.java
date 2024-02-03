@@ -1,9 +1,9 @@
 package com.example.bookstore.service.impl;
 
-import com.example.bookstore.dto.UserLoginRequestDto;
-import com.example.bookstore.dto.UserLoginResponseDto;
-import com.example.bookstore.dto.UserRegistrationRequestDto;
-import com.example.bookstore.dto.UserRegistrationResponseDto;
+import com.example.bookstore.dto.user.UserLoginRequestDto;
+import com.example.bookstore.dto.user.UserLoginResponseDto;
+import com.example.bookstore.dto.user.UserRegistrationRequestDto;
+import com.example.bookstore.dto.user.UserRegistrationResponseDto;
 import com.example.bookstore.exception.RegistrationException;
 import com.example.bookstore.mapper.UserMapper;
 import com.example.bookstore.model.Role;

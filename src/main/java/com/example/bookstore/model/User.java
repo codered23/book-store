@@ -41,8 +41,8 @@ public class User implements UserDetails {
     private String shippingAddress;
     @ManyToMany(fetch = FetchType.EAGER)
     private Set<Role> roles = new HashSet<>();
-    @Column(nullable = false)
-    private boolean isDeleted = false;
+    @Column(columnDefinition = "BOOLEAN DEFAULT false")
+    private boolean isDeleted;
 
     public void addRole(Role role) {
         roles.add(role);

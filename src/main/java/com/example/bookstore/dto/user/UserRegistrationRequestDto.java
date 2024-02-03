@@ -1,4 +1,4 @@
-package com.example.bookstore.dto;
+package com.example.bookstore.dto.user;
 
 import com.example.bookstore.validation.anotations.Email;
 import com.example.bookstore.validation.anotations.FieldMatch;

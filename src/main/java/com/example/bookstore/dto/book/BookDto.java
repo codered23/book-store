@@ -1,4 +1,4 @@
-package com.example.bookstore.dto;
+package com.example.bookstore.dto.book;
 
 import java.math.BigDecimal;
 import java.util.Set;
@@ -14,5 +14,5 @@ public class BookDto {
     private String description;
     private String coverImage;
     private Set<Long> categoryIds;
-    private boolean isDeleted = false;
+    private boolean isDeleted;
 }

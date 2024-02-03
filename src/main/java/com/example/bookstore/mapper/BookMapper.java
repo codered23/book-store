@@ -1,9 +1,9 @@
 package com.example.bookstore.mapper;
 
 import com.example.bookstore.config.MapperConfig;
-import com.example.bookstore.dto.BookDto;
-import com.example.bookstore.dto.BookDtoWithoutCategoryIds;
-import com.example.bookstore.dto.CreateBookRequestDto;
+import com.example.bookstore.dto.book.BookDto;
+import com.example.bookstore.dto.book.BookDtoWithoutCategoryIds;
+import com.example.bookstore.dto.book.CreateBookRequestDto;
 import com.example.bookstore.model.Book;
 import com.example.bookstore.model.Category;
 import java.util.Set;
