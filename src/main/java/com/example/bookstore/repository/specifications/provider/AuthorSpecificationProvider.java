@@ -1,4 +1,4 @@
-package com.example.bookstore.repository.specifications;
+package com.example.bookstore.repository.specifications.provider;
 
 import com.example.bookstore.model.Book;
 import java.util.Arrays;

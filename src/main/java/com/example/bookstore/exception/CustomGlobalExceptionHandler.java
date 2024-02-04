@@ -1,10 +1,11 @@
 package com.example.bookstore.exception;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.example.bookstore.config.Config;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -19,8 +20,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 @ControllerAdvice
 public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler {
-    private static final DateTimeFormatter format =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
@@ -29,7 +28,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
             HttpStatusCode status,
             WebRequest request) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
+        body.put("timestamp", LocalDateTime.now().format(Config.format));
         body.put("status", HttpStatus.BAD_REQUEST);
         List<String> errors = ex.getBindingResult().getAllErrors().stream()
                 .map(e -> getErrorMessage(e))
@@ -42,7 +41,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     @ExceptionHandler(RegistrationException.class)
     public ResponseEntity<Object> handleRegistrationException(RegistrationException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now().format(format));
+        body.put("timestamp", LocalDateTime.now().format(Config.format));
         body.put("status", HttpStatus.BAD_REQUEST);
         body.put("message", ex.getMessage());
 

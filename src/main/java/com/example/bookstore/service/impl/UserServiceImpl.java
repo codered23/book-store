@@ -1,7 +1,7 @@
 package com.example.bookstore.service.impl;
 
 import com.example.bookstore.model.User;
-import com.example.bookstore.repository.UserRepository;
+import com.example.bookstore.repository.user.UserRepository;
 import com.example.bookstore.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
