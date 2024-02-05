@@ -9,20 +9,18 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-
 @Entity
 @Data
 @RequiredArgsConstructor
-@Table(name = "cart_items")
+@Table(name = "orders")
 @SQLDelete(sql = "UPDATE orders SET is_deleted = true WHERE id = ?")
 @Where(clause = "is_deleted = false")
 public class Order {
@@ -41,7 +39,7 @@ public class Order {
     @Column(nullable = false)
     private String shippingAddress;
     @OneToMany(mappedBy = "order")
-    Set<OrderItem> orderItems = new HashSet<>();
+    private Set<OrderItem> orderItems = new HashSet<>();
     @Column(columnDefinition = "BOOLEAN DEFAULT false")
     private boolean isDeleted;
 

@@ -8,6 +8,6 @@ import org.mapstruct.Mapping;
 
 @Mapper(config = MapperConfig.class)
 public interface OrderItemMapper {
-    @Mapping(target = "book", source = "book.id")
+    @Mapping(target = "bookId", source = "book.id")
     OrderItemDto toDto(OrderItem orderItem);
 }

@@ -10,8 +10,8 @@ import com.example.bookstore.model.CartItem;
 import com.example.bookstore.model.ShoppingCart;
 import com.example.bookstore.model.User;
 import com.example.bookstore.repository.book.BookRepository;
-import com.example.bookstore.repository.cartItem.CartItemRepository;
 import com.example.bookstore.repository.cart.ShoppingCartRepository;
+import com.example.bookstore.repository.cartitem.CartItemRepository;
 import com.example.bookstore.repository.user.UserRepository;
 import com.example.bookstore.service.ShoppingCartService;
 import lombok.AllArgsConstructor;
@@ -84,6 +84,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         return userRepository.findByEmail(email).orElseThrow(
                 () -> new EntityNotFoundException("User with email " + email + " not found"));
     }
+
     private ShoppingCart getShoppingCart(User user) {
         return shoppingCartRepository.findByUserId(user.getId()).orElseThrow(() ->
                 new EntityNotFoundException("Can't find Shopping cart by id: " + user.getId()));
