@@ -47,14 +47,14 @@ public class OrderServiceImpl implements OrderService {
         ShoppingCart shoppingCart = getCurrentShoppingCart(user.getId());
         Order order = createOrder(user, shoppingCart, dto);
         cartItemRepository.deleteAll(shoppingCart.getCartItems());
-        return orderMapper.toDto(order);
+        return orderMapper.toDto(order, orderItemMapper);
     }
 
     @Override
     public List<OrderDto> getAll(Authentication authentication, Pageable pageable) {
         User user = getCurrentUser(authentication);
         return orderRepository.findAllByUserId(user.getId(), pageable).stream()
-                .map(orderMapper::toDto)
+                .map(order -> orderMapper.toDto(order, orderItemMapper))
                 .toList();
     }
 
@@ -71,7 +71,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderDto getOrderById(Authentication authentication, Long orderId) {
         User user = getCurrentUser(authentication);
-        return orderMapper.toDto(getOrder(orderId, user.getId()));
+        return orderMapper.toDto(getOrder(orderId, user.getId()), orderItemMapper);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = getOrder(orderId, user.getId());
         Order.Status status = Order.Status.valueOf(dto.getStatus().toUpperCase());
         order.setStatus(status);
-        return orderMapper.toDto(orderRepository.save(order));
+        return orderMapper.toDto(orderRepository.save(order), orderItemMapper);
     }
 
     @Override
@@ -145,7 +145,7 @@ public class OrderServiceImpl implements OrderService {
             Book book = cartItem.getBook();
             BigDecimal cartItemPrice = book.getPrice()
                     .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
-            total.add(cartItemPrice);
+            total = total.add(cartItemPrice);
         }
         return total;
     }
