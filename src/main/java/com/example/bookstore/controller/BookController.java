@@ -11,6 +11,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,28 +33,33 @@ public class BookController {
     @GetMapping
     @Operation(summary = "Get all books",
             description = "Get a list of all available books with pagination")
-    public List<BookDto> getAll(Pageable pageable) {
-        return bookService.findAll(pageable);
+    public ResponseEntity<List<BookDto>> getAll(Pageable pageable) {
+        List<BookDto> all = bookService.findAll(pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(all);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get book by id", description = "Get book by id if it exists")
-    public BookDto getBookById(@PathVariable Long id) {
-        return bookService.getById(id);
+    public ResponseEntity<BookDto> getBookById(@PathVariable Long id) {
+        BookDto byId = bookService.getById(id);
+        return ResponseEntity.status(HttpStatus.OK).body(byId);
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping
     @Operation(summary = "Create a new book", description = "Create a new book by JSON body")
-    public BookDto createBook(@RequestBody @Valid CreateBookRequestDto requestDto) {
-        return bookService.save(requestDto);
+    public ResponseEntity<BookDto> createBook(@RequestBody @Valid CreateBookRequestDto requestDto) {
+        BookDto save = bookService.save(requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(save);
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     @Operation(summary = "Update book by id", description = "Update book by JSON body")
-    public void update(@PathVariable Long id, @RequestBody @Valid CreateBookRequestDto requestDto) {
-        bookService.update(id, requestDto);
+    public ResponseEntity<BookDto> update(@PathVariable Long id,
+                                          @RequestBody @Valid CreateBookRequestDto requestDto) {
+        BookDto update = bookService.update(id, requestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(update);
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -67,7 +73,9 @@ public class BookController {
     @GetMapping("/search")
     @Operation(summary = "Search book by params",
             description = "Params: minPrice, maxPrice and list of authors")
-    public List<BookDto> search(BookSearchParams bookSearchParameters, Pageable pageable) {
-        return bookService.search(bookSearchParameters, pageable);
+    public ResponseEntity<List<BookDto>> search(BookSearchParams bookSearchParameters,
+                                                Pageable pageable) {
+        List<BookDto> search = bookService.search(bookSearchParameters, pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(search);
     }
 }

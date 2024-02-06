@@ -12,6 +12,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,37 +35,46 @@ public class CategoryController {
     @GetMapping
     @Operation(summary = "Get all categories",
             description = "Get a list of all available categories")
-    public List<CategoryDto> getAll(Pageable pageable) {
-        return categoryService.findAll(pageable);
+    public ResponseEntity<List<CategoryDto>> getAll(Pageable pageable) {
+        List<CategoryDto> all = categoryService.findAll(pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(all);
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @GetMapping("/{id}")
     @Operation(summary = "Get category by id", description = "Get category by id if it exists")
-    public CategoryDto getCategoryById(@PathVariable Long id) {
-        return categoryService.getById(id);
+    public ResponseEntity<CategoryDto> getCategoryById(@PathVariable Long id) {
+        CategoryDto byId = categoryService.getById(id);
+        return ResponseEntity.status(HttpStatus.OK).body(byId);
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping
     @Operation(summary = "Create a new category",
             description = "Create a new category by JSON body")
-    public CategoryDto createCategory(@RequestBody @Valid CategoryRequestDto requestDto) {
-        return categoryService.save(requestDto);
+    public ResponseEntity<CategoryDto> createCategory(@RequestBody @Valid
+                                                          CategoryRequestDto requestDto) {
+        CategoryDto save = categoryService.save(requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(save);
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
-    @Operation(summary = "Update category by id", description = "Update category by JSON body")
-    public void update(@PathVariable Long id, @RequestBody @Valid CategoryRequestDto requestDto) {
-        categoryService.update(id, requestDto);
+    @Operation(summary = "Update category by id",
+            description = "Update category by JSON body")
+    public ResponseEntity<CategoryDto> update(@PathVariable Long id,
+                                              @RequestBody @Valid CategoryRequestDto requestDto) {
+        CategoryDto update = categoryService.update(id, requestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(update);
     }
 
     @GetMapping("/{id}/books")
     @Operation(summary = "Get all books by category",
             description = "Return list of books by similar category")
-    public List<BookDtoWithoutCategoryIds> getBooksByCategoryId(@PathVariable Long id) {
-        return bookService.findAllByCategoryId(id);
+    public ResponseEntity<List<BookDtoWithoutCategoryIds>> getBooksByCategoryId(@PathVariable
+                                                                                    Long id) {
+        List<BookDtoWithoutCategoryIds> allByCategoryId = bookService.findAllByCategoryId(id);
+        return ResponseEntity.status(HttpStatus.OK).body(allByCategoryId);
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")

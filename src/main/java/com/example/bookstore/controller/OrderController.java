@@ -41,41 +41,48 @@ public class OrderController {
     @GetMapping
     @Operation(summary = "Get all orders",
             description = "Retrieve a list of all orders")
-    List<OrderDto> getAllOrders(Authentication authentication, Pageable pageable) {
-        return orderService.getAll(authentication, pageable);
+    ResponseEntity<List<OrderDto>> getAllOrders(Authentication authentication, Pageable pageable) {
+        List<OrderDto> orderDtoList = orderService.getAll(authentication, pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(orderDtoList);
     }
 
     @GetMapping("/{orderId}")
     @Operation(summary = "Get order by id",
             description = "Retrieve order with all information")
-    OrderDto getOrderById(Authentication authentication,
+    ResponseEntity<OrderDto> getOrderById(Authentication authentication,
                                         @PathVariable Long orderId) {
-        return orderService.getOrderById(authentication, orderId);
+        OrderDto orderById = orderService.getOrderById(authentication, orderId);
+        return ResponseEntity.status(HttpStatus.OK).body(orderById);
     }
 
     @GetMapping("/{orderId}/items")
     @Operation(summary = "Get all orderItems from order",
             description = "Retrieve a list of all orderItems by order id")
-    List<OrderItemDto> getAllOrderItems(Authentication authentication,
+    ResponseEntity<List<OrderItemDto>> getAllOrderItems(Authentication authentication,
                                         @PathVariable Long orderId, Pageable pageable) {
-        return orderService.getAllOrderItems(authentication, orderId, pageable);
+        List<OrderItemDto> allOrderItems = orderService.getAllOrderItems(authentication,
+                orderId, pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(allOrderItems);
     }
 
     @GetMapping("/{orderId}/items/{itemId}")
     @Operation(summary = "Get item from order",
             description = "Retrieve item by id from order")
-    OrderItemDto getOrderItemBy(Authentication authentication, @PathVariable Long orderId,
-                                @PathVariable Long itemId) {
-        return orderService.getOrderItemBy(authentication, orderId, itemId);
+    ResponseEntity<OrderItemDto> getOrderItemBy(Authentication authentication,
+                                                @PathVariable Long orderId,
+                                                @PathVariable Long itemId) {
+        OrderItemDto orderItemBy = orderService.getOrderItemBy(authentication, orderId, itemId);
+        return ResponseEntity.status(HttpStatus.OK).body(orderItemBy);
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     @Operation(summary = "update order status",
             description = "Change status in specific order")
-    OrderDto updateOrderStatus(Authentication authentication,
+    ResponseEntity<OrderDto> updateOrderStatus(Authentication authentication,
                                @PathVariable Long id,
                                @RequestBody PutOrderRequest dto) {
-        return orderService.updateStatus(authentication, id, dto);
+        OrderDto orderDto = orderService.updateStatus(authentication, id, dto);
+        return ResponseEntity.status(HttpStatus.OK).body(orderDto);
     }
 }
