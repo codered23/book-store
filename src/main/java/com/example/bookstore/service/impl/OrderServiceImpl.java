@@ -1,6 +1,6 @@
 package com.example.bookstore.service.impl;
 
-import com.example.bookstore.config.Config;
+import com.example.bookstore.config.DateTimeConfig;
 import com.example.bookstore.dto.order.OrderDto;
 import com.example.bookstore.dto.order.OrderItemDto;
 import com.example.bookstore.dto.order.PostOrderRequestDto;
@@ -103,7 +103,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(Order.Status.NEW);
         order.setTotal(countTotal(shoppingCart));
         order.setShippingAddress(dto.getShippingAddress());
-        order.setOrderDate(LocalDateTime.now().format(Config.format));
+        order.setOrderDate(LocalDateTime.now().format(DateTimeConfig.format));
         orderRepository.save(order);
         order.setOrderItems(getOrderItems(shoppingCart, order));
         return order;

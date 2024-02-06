@@ -1,6 +1,5 @@
 package com.example.bookstore.dto.order;
 
-import com.example.bookstore.model.Order;
 import java.math.BigDecimal;
 import java.util.Set;
 import lombok.Data;
@@ -12,6 +11,6 @@ public class OrderDto {
     private Set<OrderItemDto> orderItems;
     private String orderDate;
     private BigDecimal total;
-    private Order.Status status;
+    private String status;
     private String shippingAddress;
 }

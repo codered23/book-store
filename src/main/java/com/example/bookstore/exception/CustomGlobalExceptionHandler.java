@@ -1,6 +1,6 @@
 package com.example.bookstore.exception;
 
-import com.example.bookstore.config.Config;
+import com.example.bookstore.config.DateTimeConfig;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,7 +27,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
             HttpStatusCode status,
             WebRequest request) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now().format(Config.format));
+        body.put("timestamp", LocalDateTime.now().format(DateTimeConfig.format));
         body.put("status", HttpStatus.BAD_REQUEST);
         List<String> errors = ex.getBindingResult().getAllErrors().stream()
                 .map(e -> getErrorMessage(e))
@@ -40,7 +40,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     @ExceptionHandler(RegistrationException.class)
     public ResponseEntity<Object> handleRegistrationException(RegistrationException ex) {
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now().format(Config.format));
+        body.put("timestamp", LocalDateTime.now().format(DateTimeConfig.format));
         body.put("status", HttpStatus.BAD_REQUEST);
         body.put("message", ex.getMessage());
 

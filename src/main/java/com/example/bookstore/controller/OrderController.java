@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,8 +32,10 @@ public class OrderController {
     @PostMapping
     @Operation(summary = "Place new order",
             description = "Create a new order based on the items in the shopping cart")
-    OrderDto placeOrder(@RequestBody PostOrderRequestDto dto, Authentication authentication) {
-        return orderService.placeOrder(authentication, dto);
+    ResponseEntity<OrderDto> placeOrder(@RequestBody PostOrderRequestDto dto,
+                                        Authentication authentication) {
+        OrderDto orderDto = orderService.placeOrder(authentication, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderDto);
     }
 
     @GetMapping

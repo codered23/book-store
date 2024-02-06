@@ -38,6 +38,7 @@ public class CategoryController {
         return categoryService.findAll(pageable);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @GetMapping("/{id}")
     @Operation(summary = "Get category by id", description = "Get category by id if it exists")
     public CategoryDto getCategoryById(@PathVariable Long id) {
