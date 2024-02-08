@@ -1,4 +1,4 @@
-package com.example.bookstore.repository;
+package com.example.bookstore.repository.book;
 
 import com.example.bookstore.model.Book;
 import java.util.List;

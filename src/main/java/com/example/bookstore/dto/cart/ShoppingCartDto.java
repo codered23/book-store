@@ -7,6 +7,6 @@ import lombok.Data;
 public class ShoppingCartDto {
     private Long id;
     private Long userId;
-    private Set<Long> cartItemIds;
+    private Set<CartItemDto> cartItemIds;
     private boolean isDeleted;
 }

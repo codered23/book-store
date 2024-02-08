@@ -1,4 +1,4 @@
-package com.example.bookstore.repository;
+package com.example.bookstore.repository.user;
 
 import com.example.bookstore.model.User;
 import java.util.Optional;

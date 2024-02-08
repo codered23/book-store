@@ -1,7 +1,7 @@
 package com.example.bookstore.service.impl;
 
 import com.example.bookstore.model.Role;
-import com.example.bookstore.repository.RoleRepository;
+import com.example.bookstore.repository.role.RoleRepository;
 import com.example.bookstore.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

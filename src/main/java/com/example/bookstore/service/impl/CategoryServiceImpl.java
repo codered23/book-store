@@ -4,7 +4,7 @@ import com.example.bookstore.dto.category.CategoryDto;
 import com.example.bookstore.dto.category.CategoryRequestDto;
 import com.example.bookstore.mapper.CategoryMapper;
 import com.example.bookstore.model.Category;
-import com.example.bookstore.repository.CategoryRepository;
+import com.example.bookstore.repository.category.CategoryRepository;
 import com.example.bookstore.service.CategoryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

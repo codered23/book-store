@@ -1,9 +1,9 @@
-package com.example.bookstore.repository;
+package com.example.bookstore.repository.specifications;
 
 import com.example.bookstore.dto.book.BookSearchParams;
 import com.example.bookstore.model.Book;
-import com.example.bookstore.repository.specifications.AuthorSpecificationProvider;
-import com.example.bookstore.repository.specifications.PriceSpecificationProvider;
+import com.example.bookstore.repository.specifications.provider.AuthorSpecificationProvider;
+import com.example.bookstore.repository.specifications.provider.PriceSpecificationProvider;
 import java.math.BigDecimal;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;

@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,32 +30,37 @@ public class ShoppingCartController {
     @GetMapping
     @Operation(summary = "Get shoppingCart by user",
             description = "Retrieve the shopping cart with all added items")
-    public ShoppingCartDto getShoppingCart(Authentication authentication) {
-        return shoppingCartService.getByUser(authentication);
+    public ResponseEntity<ShoppingCartDto> getShoppingCart(Authentication authentication) {
+        ShoppingCartDto byUser = shoppingCartService.getByUser(authentication);
+        return ResponseEntity.status(HttpStatus.OK).body(byUser);
     }
 
     @PostMapping
     @Operation(summary = "Add item to cart",
             description = "Add a new item to the shopping cart")
-    public ShoppingCartDto createCategory(Authentication authentication,
+    public ResponseEntity<ShoppingCartDto> createCategory(Authentication authentication,
              @RequestBody @Valid AddItemToCartRequest requestDto) {
-        return shoppingCartService.addToCart(authentication, requestDto);
+        ShoppingCartDto shoppingCartDto = shoppingCartService.addToCart(authentication, requestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(shoppingCartDto);
     }
 
     @PutMapping("/cart-items/{id}")
     @Operation(summary = "Update quantity of item in cart",
             description = "Update the quantity of a specific item in the shopping cart")
-    public ShoppingCartDto update(@PathVariable Long id,
+    public ResponseEntity<ShoppingCartDto> update(@PathVariable Long id,
                                   @RequestBody @Valid UpdateItemRequest requestDto,
                                   Authentication authentication) {
-        return shoppingCartService.updateCartItem(authentication, id, requestDto);
+        ShoppingCartDto shoppingCartDto = shoppingCartService.updateCartItem(authentication,
+                id, requestDto);
+        return ResponseEntity.status(HttpStatus.OK).body(shoppingCartDto);
     }
 
     @DeleteMapping("/cart-items/{id}")
     @Operation(summary = "Get all books by category",
             description = "Return list of books by similar category")
-    public ShoppingCartDto getBooksByCategoryId(@PathVariable Long id,
+    public ResponseEntity<ShoppingCartDto> getBooksByCategoryId(@PathVariable Long id,
                                                 Authentication authentication) {
-        return shoppingCartService.deleteCartItem(id, authentication);
+        ShoppingCartDto shoppingCartDto = shoppingCartService.deleteCartItem(id, authentication);
+        return ResponseEntity.status(HttpStatus.OK).body(shoppingCartDto);
     }
 }
