@@ -1,4 +1,4 @@
-package com.example.bookstore.repository.cart;
+package com.example.bookstore.repository;
 
 import com.example.bookstore.model.ShoppingCart;
 import java.util.Optional;

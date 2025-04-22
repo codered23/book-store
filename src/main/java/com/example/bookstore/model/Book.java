@@ -12,12 +12,18 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "books")
 @SQLDelete(sql = "UPDATE books SET is_deleted = true WHERE id = ?")
 @Where(clause = "is_deleted = false")
@@ -35,13 +41,13 @@ public class Book {
     private BigDecimal price;
     private String description;
     private String coverImage;
-    @ManyToMany
+    @ManyToMany()
     @JoinTable(
             name = "books_categories",
             joinColumns = @JoinColumn(name = "book_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id"))
+    @Builder.Default
     private Set<Category> categories = new HashSet<>();
     @Column(columnDefinition = "BOOLEAN DEFAULT false")
     private boolean isDeleted;
-
 }

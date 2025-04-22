@@ -12,7 +12,7 @@ public interface BookService {
 
     List<BookDto> findAll(Pageable pageable);
 
-    BookDto getById(Long id);
+    BookDto findById(Long id);
 
     void deleteById(Long id);
 
@@ -21,4 +21,8 @@ public interface BookService {
     List<BookDto> search(BookSearchParams params, Pageable pageable);
 
     List<BookDtoWithoutCategoryIds> findAllByCategoryId(Long id);
+
+    BookDto addBookToCategory(Long bookId, Long categoryId);
+
+    List<BookDto> findAllWithCategories();
 }

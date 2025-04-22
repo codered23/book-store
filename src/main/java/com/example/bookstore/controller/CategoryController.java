@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Book-store api", description = "Endpoints for managing categories")
 @RequiredArgsConstructor
 @RestController
-@RequestMapping(value = "/api/categories")
+@RequestMapping("/api/categories")
 public class CategoryController {
     private final CategoryService categoryService;
     private final BookService bookService;
@@ -44,7 +44,7 @@ public class CategoryController {
     @GetMapping("/{id}")
     @Operation(summary = "Get category by id", description = "Get category by id if it exists")
     public ResponseEntity<CategoryDto> getCategoryById(@PathVariable Long id) {
-        CategoryDto byId = categoryService.getById(id);
+        CategoryDto byId = categoryService.findById(id);
         return ResponseEntity.status(HttpStatus.OK).body(byId);
     }
 
@@ -71,8 +71,8 @@ public class CategoryController {
     @GetMapping("/{id}/books")
     @Operation(summary = "Get all books by category",
             description = "Return list of books by similar category")
-    public ResponseEntity<List<BookDtoWithoutCategoryIds>> getBooksByCategoryId(@PathVariable
-                                                                                    Long id) {
+    public ResponseEntity<List<BookDtoWithoutCategoryIds>> getBooksByCategoryId(
+            @PathVariable Long id) {
         List<BookDtoWithoutCategoryIds> allByCategoryId = bookService.findAllByCategoryId(id);
         return ResponseEntity.status(HttpStatus.OK).body(allByCategoryId);
     }
