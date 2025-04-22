@@ -41,7 +41,7 @@ public class BookController {
     @GetMapping("/{id}")
     @Operation(summary = "Get book by id", description = "Get book by id if it exists")
     public ResponseEntity<BookDto> getBookById(@PathVariable Long id) {
-        BookDto byId = bookService.getById(id);
+        BookDto byId = bookService.findById(id);
         return ResponseEntity.status(HttpStatus.OK).body(byId);
     }
 
@@ -55,7 +55,8 @@ public class BookController {
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
-    @Operation(summary = "Update book by id", description = "Update book by JSON body")
+    @Operation(summary = "Update book by id",
+            description = "Update book by JSON body")
     public ResponseEntity<BookDto> update(@PathVariable Long id,
                                           @RequestBody @Valid CreateBookRequestDto requestDto) {
         BookDto update = bookService.update(id, requestDto);
@@ -77,5 +78,18 @@ public class BookController {
                                                 Pageable pageable) {
         List<BookDto> search = bookService.search(bookSearchParameters, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(search);
+    }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping("/{bookId}/categories/{categoryId}")
+    @Operation(
+            summary = "Add book to category",
+            description = "Adds an existing book to an existing category"
+    )
+    public ResponseEntity<BookDto> addBookToCategory(
+            @PathVariable Long bookId,
+            @PathVariable Long categoryId) {
+        BookDto updatedBook = bookService.addBookToCategory(bookId, categoryId);
+        return ResponseEntity.ok(updatedBook);
     }
 }

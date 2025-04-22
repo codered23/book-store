@@ -1,10 +1,13 @@
 package com.example.bookstore.dto.book;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.Set;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class BookDto {
     private Long id;
     private String title;
@@ -13,6 +16,7 @@ public class BookDto {
     private String isbn;
     private String description;
     private String coverImage;
-    private Set<Long> categoryIds;
+    @Builder.Default
+    private Set<Long> categoryIds = new HashSet<>();
     private boolean isDeleted;
 }

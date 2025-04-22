@@ -22,16 +22,17 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    public ResponseEntity<UserLoginResponseDto> login(@RequestBody @Valid
-                                                          UserLoginRequestDto request) {
+    public ResponseEntity<UserLoginResponseDto> login(
+            @RequestBody 
+            @Valid UserLoginRequestDto request) {
         UserLoginResponseDto login = authenticationService.login(request);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(login);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserRegistrationResponseDto> register(@RequestBody @Valid
-                                                    UserRegistrationRequestDto request)
-            throws RegistrationException {
+    public ResponseEntity<UserRegistrationResponseDto> register(
+            @RequestBody 
+            @Valid UserRegistrationRequestDto request) throws RegistrationException {
         UserRegistrationResponseDto register = authenticationService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(register);
     }

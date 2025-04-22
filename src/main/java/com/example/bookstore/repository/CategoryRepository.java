@@ -1,4 +1,4 @@
-package com.example.bookstore.repository.category;
+package com.example.bookstore.repository;
 
 import com.example.bookstore.model.Category;
 import org.springframework.data.domain.Page;

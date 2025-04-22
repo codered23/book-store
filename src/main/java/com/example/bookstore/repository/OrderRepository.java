@@ -1,4 +1,4 @@
-package com.example.bookstore.repository.order;
+package com.example.bookstore.repository;
 
 import com.example.bookstore.model.Order;
 import java.util.Optional;
