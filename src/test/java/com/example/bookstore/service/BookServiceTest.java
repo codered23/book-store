@@ -1,5 +1,12 @@
 package com.example.bookstore.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 import com.example.bookstore.dto.book.BookDto;
 import com.example.bookstore.dto.book.BookDtoWithoutCategoryIds;
 import com.example.bookstore.dto.book.BookSearchParams;
@@ -9,8 +16,14 @@ import com.example.bookstore.model.Book;
 import com.example.bookstore.repository.BookRepository;
 import com.example.bookstore.repository.specifications.BookSpecificationBuilder;
 import com.example.bookstore.service.impl.BookServiceImpl;
+import com.example.bookstore.util.TestUtil;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -20,12 +33,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BookServiceTest {
@@ -43,40 +50,9 @@ class BookServiceTest {
 
     @BeforeEach
     void setUp() {
-        requestDto = createBookRequestDto();
-        book = createBook();
-        bookDto = createBookDto();
-    }
-
-    private CreateBookRequestDto createBookRequestDto() {
-        return CreateBookRequestDto.builder()
-                .author("Joshua Bloch")
-                .title("Effective Java 3")
-                .isbn("1234442")
-                .description("best practices for Java Platform")
-                .price(BigDecimal.valueOf(75))
-                .coverImage("some image")
-                .build();
-    }
-
-    private Book createBook() {
-        return Book.builder().id(1L)
-                .author(requestDto.getAuthor())
-                .title(requestDto.getTitle())
-                .isbn(requestDto.getIsbn())
-                .description(requestDto.getDescription())
-                .price(requestDto.getPrice())
-                .coverImage(requestDto.getCoverImage()).build();
-    }
-
-    private BookDto createBookDto() {
-        return BookDto.builder().id(book.getId())
-                .author(book.getAuthor())
-                .title(book.getTitle())
-                .isbn(book.getIsbn())
-                .description(book.getDescription())
-                .price(book.getPrice())
-                .coverImage(book.getCoverImage()).build();
+        requestDto = TestUtil.createBookRequestDto("Effective Java 3", "Joshua Bloch", 25);
+        book = TestUtil.createBook(requestDto);
+        bookDto = TestUtil.createBookDto(book);
     }
 
     @Test
@@ -88,7 +64,7 @@ class BookServiceTest {
 
         BookDto actual = bookService.save(requestDto);
 
-        Assertions.assertTrue(EqualsBuilder.reflectionEquals(actual, bookDto));
+        assertTrue(EqualsBuilder.reflectionEquals(actual, bookDto));
         verify(bookRepository).save(book);
         verify(bookMapper).toDto(book);
         verify(bookMapper).toModel(requestDto);
@@ -108,9 +84,10 @@ class BookServiceTest {
 
         List<BookDto> actual = bookService.findAll(pageable);
 
-        Assertions.assertEquals(expectedBookDtoList.size(), actual.size());
+        assertEquals(expectedBookDtoList.size(), actual.size());
         for (BookDto expected : expectedBookDtoList) {
-            Assertions.assertTrue(actual.stream().anyMatch(actualDto -> EqualsBuilder.reflectionEquals(actualDto, expected)));
+            assertTrue(actual.stream().anyMatch(
+                    actualDto -> EqualsBuilder.reflectionEquals(actualDto, expected)));
         }
         verify(bookRepository).findAll(pageable);
         verify(bookMapper).toDto(book);
@@ -125,7 +102,7 @@ class BookServiceTest {
 
         BookDto actual = bookService.findById(book.getId());
 
-        Assertions.assertTrue(EqualsBuilder.reflectionEquals(bookDto, actual));
+        assertTrue(EqualsBuilder.reflectionEquals(bookDto, actual));
         verify(bookRepository).findById(book.getId());
         verify(bookMapper).toDto(book);
         verifyNoMoreInteractions(bookRepository, bookMapper);
@@ -145,26 +122,27 @@ class BookServiceTest {
     @Test
     @DisplayName("Update book with valid ID")
     void update_Valid_ReturnsDto() {
-        Book updatedBook = book;
+        Book updatedBook = TestUtil.createBook(requestDto);
         updatedBook.setPrice(BigDecimal.valueOf(35));
         updatedBook.setIsbn("0000");
+        BookDto bookDto = TestUtil.createBookDto(updatedBook);
         ArgumentCaptor<Book> bookCaptor = ArgumentCaptor.forClass(Book.class);
         when(bookRepository.findById(book.getId())).thenReturn(Optional.of(book));
-        when(bookRepository.save(bookCaptor.capture())).thenReturn(book);
-        when(bookMapper.toModel(requestDto)).thenReturn(book);
-        when(bookMapper.toDto(book)).thenReturn(bookDto);
+        when(bookRepository.save(any(Book.class))).thenReturn(updatedBook);
+        when(bookMapper.toModel(requestDto)).thenReturn(updatedBook);
+        when(bookMapper.toDto(updatedBook)).thenReturn(bookDto);
 
         BookDto actualBookDto = bookService.update(bookDto.getId(), requestDto);
-
+        verify(bookRepository).save(bookCaptor.capture());
         Book saved = bookCaptor.getValue();
 
-        Assertions.assertEquals(saved.getId(), book.getId());
-        Assertions.assertEquals(saved.getPrice(), BigDecimal.valueOf(35));
-        Assertions.assertEquals(saved.getIsbn(), "0000");
-        Assertions.assertTrue(EqualsBuilder.reflectionEquals(bookDto, actualBookDto));
+        assertTrue(EqualsBuilder.reflectionEquals(bookDto, actualBookDto));
+        assertEquals(saved.getId(), book.getId());
+        assertEquals(saved.getPrice(), BigDecimal.valueOf(35));
+        assertEquals(saved.getIsbn(), "0000");
+
         verify(bookRepository).findById(bookDto.getId());
-        verify(bookRepository).save(updatedBook);
-        verify(bookMapper).toDto(book);
+        verify(bookMapper).toDto(updatedBook);
         verify(bookMapper).toModel(requestDto);
         verifyNoMoreInteractions(bookMapper, bookRepository);
     }
@@ -177,7 +155,7 @@ class BookServiceTest {
         BookSearchParams params = new BookSearchParams(authors, null, null);
         Specification<Book> expectedSpecification = (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("author"), "Joshua Bloch");
-        Pageable pageable = Pageable.ofSize(10); // Приклад Pageable
+        Pageable pageable = Pageable.ofSize(10);
         Page<Book> bookPage = new PageImpl<>(bookList, pageable, bookList.size());
 
         when(specificationBuilder.build(params)).thenReturn(expectedSpecification);
@@ -186,9 +164,9 @@ class BookServiceTest {
 
         List<BookDto> actual = bookService.search(params, pageable);
 
-        Assertions.assertEquals(1, actual.size());
-        Assertions.assertTrue(actual.stream().anyMatch(actualDto ->
-                EqualsBuilder.reflectionEquals(bookDto, actualDto)));
+        assertEquals(1, actual.size());
+        assertTrue(actual.stream().anyMatch(
+                actualDto -> EqualsBuilder.reflectionEquals(bookDto, actualDto)));
         verify(bookRepository).findAll(expectedSpecification, pageable);
         verify(specificationBuilder).build(params);
         verify(bookMapper).toDto(book);
@@ -212,10 +190,10 @@ class BookServiceTest {
 
         List<BookDtoWithoutCategoryIds> actual = bookService.findAllByCategoryId(book.getId());
 
-        Assertions.assertEquals(expectedList.size(), actual.size());
+        assertEquals(expectedList.size(), actual.size());
         for (BookDtoWithoutCategoryIds expected : expectedList) {
-            Assertions.assertTrue(actual.stream().anyMatch(actualDto ->
-                    EqualsBuilder.reflectionEquals(actualDto, expected)));
+            assertTrue(actual.stream().anyMatch(
+                    actualDto -> EqualsBuilder.reflectionEquals(actualDto, expected)));
         }
         verify(bookRepository).findAllByCategoriesId(book.getId());
         verify(bookMapper).toDtoWithoutCategories(book);

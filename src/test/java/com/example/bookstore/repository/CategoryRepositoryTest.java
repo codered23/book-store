@@ -1,8 +1,12 @@
 package com.example.bookstore.repository;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.example.bookstore.config.CustomMySqlContainer;
+import com.example.bookstore.dto.category.CategoryRequestDto;
 import com.example.bookstore.model.Category;
-import org.junit.jupiter.api.Assertions;
+import com.example.bookstore.util.TestUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,16 +18,18 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Sql(scripts = "/sql/clean-up.sql")
 public class CategoryRepositoryTest {
+    private static final CustomMySqlContainer container = CustomMySqlContainer.getInstance();
     @Autowired
     private CategoryRepository categoryRepository;
     private Category romanCategory;
-    private static final CustomMySqlContainer container = CustomMySqlContainer.getInstance();
 
     @BeforeAll
     static void beforeAll() {
@@ -32,12 +38,9 @@ public class CategoryRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        categoryRepository.deleteAll();
-
-        romanCategory = new Category();
-        romanCategory.setName("Roman");
-        romanCategory.setDescription("the story about 3 friends");
-        categoryRepository.save(romanCategory);
+        CategoryRequestDto requestDto = TestUtil.createCategoryRequestDto("Roman");
+        Category category = TestUtil.createCategory(requestDto);
+        romanCategory = categoryRepository.save(category);
     }
 
     @Test
@@ -48,8 +51,8 @@ public class CategoryRepositoryTest {
 
         int actualTotalPages = all.getTotalPages();
         long actualCountOfCategories = all.getTotalElements();
-        Assertions.assertEquals(1, actualTotalPages);
-        Assertions.assertEquals(1L, actualCountOfCategories);
-        Assertions.assertTrue(all.getContent().contains(romanCategory));
+        assertEquals(1, actualTotalPages);
+        assertEquals(1L, actualCountOfCategories);
+        assertTrue(all.getContent().contains(romanCategory));
     }
 }

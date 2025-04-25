@@ -26,10 +26,6 @@
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
@@ -191,6 +187,7 @@
                     <configLocation>${maven.checkstyle.plugin.configLocation}</configLocation>
                     <suppressionsLocation>exclude.xml</suppressionsLocation>
 <!--                    <encoding>UTF-8</encoding>-->
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <linkXRef>false</linkXRef>

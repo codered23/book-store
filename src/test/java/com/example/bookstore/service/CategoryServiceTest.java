@@ -1,13 +1,24 @@
 package com.example.bookstore.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 import com.example.bookstore.dto.category.CategoryDto;
 import com.example.bookstore.dto.category.CategoryRequestDto;
 import com.example.bookstore.mapper.CategoryMapper;
 import com.example.bookstore.model.Category;
 import com.example.bookstore.repository.CategoryRepository;
 import com.example.bookstore.service.impl.CategoryServiceImpl;
+import com.example.bookstore.util.TestUtil;
+import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -17,13 +28,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CategoryServiceTest {
@@ -39,32 +43,9 @@ public class CategoryServiceTest {
 
     @BeforeEach
     void setUp() {
-        categoryRequestDto = createCategoryRequestDto();
-        category = createCategory();
-        categoryDto = createCategoryDto();
-    }
-
-    private CategoryRequestDto createCategoryRequestDto() {
-        CategoryRequestDto requestDto = new CategoryRequestDto();
-        requestDto.setName("Fantasy");
-        requestDto.setDescription("involves supernatural or magical elements");
-        return requestDto;
-    }
-
-    private Category createCategory() {
-        Category cat = new Category();
-        cat.setId(1L);
-        cat.setName(categoryRequestDto.getName());
-        cat.setDescription(categoryRequestDto.getDescription());
-        return cat;
-    }
-
-    private CategoryDto createCategoryDto() {
-        CategoryDto dto = new CategoryDto();
-        dto.setId(category.getId());
-        dto.setName(category.getName());
-        dto.setDescription(category.getDescription());
-        return dto;
+        categoryRequestDto = TestUtil.createCategoryRequestDto("Roman");
+        category = TestUtil.createCategory(categoryRequestDto);
+        categoryDto = TestUtil.createCategoryDto(category);
     }
 
     @Test
@@ -110,7 +91,8 @@ public class CategoryServiceTest {
         List<CategoryDto> actual = categoryService.findAll(pageable);
 
         assertEquals(1, actual.size());
-        assertTrue(actual.stream().anyMatch(dto -> EqualsBuilder.reflectionEquals(dto, categoryDto)));
+        assertTrue(actual.stream().anyMatch(
+                dto -> EqualsBuilder.reflectionEquals(dto, categoryDto)));
         verify(categoryRepository).findAll(pageable);
         verify(categoryMapper).toDto(category);
         verifyNoMoreInteractions(categoryRepository, categoryMapper);

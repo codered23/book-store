@@ -1,15 +1,24 @@
 package com.example.bookstore.repository;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.example.bookstore.config.CustomMySqlContainer;
+import com.example.bookstore.dto.book.CreateBookRequestDto;
+import com.example.bookstore.dto.category.CategoryRequestDto;
 import com.example.bookstore.model.Book;
 import com.example.bookstore.model.Category;
 import com.example.bookstore.repository.specifications.provider.PriceSpecificationProvider;
+import com.example.bookstore.util.TestUtil;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -18,27 +27,24 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
 
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Sql(scripts = "/sql/clean-up.sql")
 class BookRepositoryTest {
+    private static final CustomMySqlContainer container = CustomMySqlContainer.getInstance();
     private final BookRepository bookRepository;
-    private final  CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
+    private final List<Book> books = new ArrayList<>();
     private Long romanCategoryId;
     private Long fantasyCategoryId;
-    private final List<Book> books = new ArrayList<>();
-    private static final CustomMySqlContainer container = CustomMySqlContainer.getInstance();
 
     @Autowired
-    public BookRepositoryTest(BookRepository bookRepository, CategoryRepository categoryRepository) {
+    public BookRepositoryTest(BookRepository bookRepository,
+                              CategoryRepository categoryRepository) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
     }
@@ -50,66 +56,60 @@ class BookRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        bookRepository.deleteAll();
-        categoryRepository.deleteAll();
+        CategoryRequestDto requestDto = TestUtil.createCategoryRequestDto("Roman");
+        Category firstCategory = TestUtil.createCategory(requestDto);
+        romanCategoryId = categoryRepository.save(firstCategory).getId();
 
-        Category category = new Category();
-        category.setName("Roman");
-        category.setDescription("the story about 3 friends");
-        romanCategoryId = categoryRepository.save(category).getId();
+        CategoryRequestDto secondRequestDto = TestUtil.createCategoryRequestDto("Fantasy");
+        Category secondCategory = TestUtil.createCategory(secondRequestDto);
 
-        Category category2 = new Category();
-        category2.setName("Fantasy");
-        category2.setDescription("Magic and adventure");
-        fantasyCategoryId = categoryRepository.save(category2).getId();
+        fantasyCategoryId = categoryRepository.save(secondCategory).getId();
 
-        Book book1 = createBook("First Book", category, BigDecimal.valueOf(11.00));
-        Book book2 = createBook("Second Book", category2, BigDecimal.valueOf(15.50));
-        Book book3 = createBook("Third Book", category2, BigDecimal.valueOf(20.00));
+        Book firstBook = createBook("First Book", "Joshua", firstCategory, 11);
+        Book secondBook = createBook("Second Book", "Bloch", secondCategory, 15);
+        Book thirdBook = createBook("Third Book", "Artur", secondCategory, 20);
 
-        books.addAll(List.of(book1, book2, book3));
+        books.addAll(List.of(firstBook, secondBook, thirdBook));
     }
 
-    private Book createBook(String title, Category category, BigDecimal price) {
-        Book book = new Book();
-        book.setTitle(title);
-        book.setAuthor("Some Author");
-        book.setIsbn(UUID.randomUUID().toString());
-        book.setDescription("Some Description");
-        book.setPrice(price);
-        book.setCoverImage("some_image.jpg");
+    private Book createBook(String title, String author, Category category, int price) {
+        CreateBookRequestDto bookRequestDto = TestUtil.createBookRequestDto(title, author, price);
+        Book book = TestUtil.createBook(bookRequestDto);
         book.setCategories(new HashSet<>(List.of(category)));
         return bookRepository.save(book);
     }
+
     @Test
     @DisplayName("Finding all books with price specification returns the correct book")
     void findAllWithPriceSpecification() {
-        Specification<Book> bookSpecification = PriceSpecificationProvider.getSpecification(BigDecimal.valueOf(10),
-                BigDecimal.valueOf(12));
+        Specification<Book> bookSpecification = PriceSpecificationProvider.getSpecification(
+                BigDecimal.valueOf(10), BigDecimal.valueOf(12));
         Pageable pageable = PageRequest.of(0, 5);
         Page<Book> all = bookRepository.findAll(bookSpecification, pageable);
 
         int actualTotalPages = all.getTotalPages();
-        Assertions.assertEquals(1, actualTotalPages);
+        assertEquals(1, actualTotalPages);
         long actualCountOfBooks = all.get().count();
-        Assertions.assertEquals(1L, actualCountOfBooks);
-        Assertions.assertTrue(all.get().anyMatch(dto -> EqualsBuilder.reflectionEquals(dto, books.get(0))));
+        assertEquals(1L, actualCountOfBooks);
+        assertTrue(all.get().anyMatch(dto -> EqualsBuilder.reflectionEquals(dto, books.get(0))));
     }
-    
+
     @Test
     @DisplayName("Finding all books by Roman category ID returns the correct books")
     void findAllByRomanCategoryId() {
         List<Book> allByCategoriesId = bookRepository.findAllByCategoriesId(romanCategoryId);
-        Assertions.assertEquals(1, allByCategoriesId.size());
-        Assertions.assertEquals(allByCategoriesId.get(0).getTitle(), "First Book");
+        assertEquals(1, allByCategoriesId.size());
+        assertEquals(allByCategoriesId.get(0).getTitle(), "First Book");
     }
 
     @Test
     @DisplayName("Finding all books by Fantasy category ID returns the correct book")
     void findAllByFantasyCategoryId() {
         List<Book> allByCategoriesId = bookRepository.findAllByCategoriesId(fantasyCategoryId);
-        Assertions.assertEquals(2, allByCategoriesId.size());
-        Assertions.assertTrue(allByCategoriesId.stream().anyMatch(book -> book.getTitle().equals("Second Book")));
-        Assertions.assertTrue(allByCategoriesId.stream().anyMatch(book -> book.getTitle().equals("Third Book")));
+        assertEquals(2, allByCategoriesId.size());
+        assertTrue(allByCategoriesId.stream().anyMatch(book ->
+                book.getTitle().equals("Second Book")));
+        assertTrue(allByCategoriesId.stream().anyMatch(book ->
+                book.getTitle().equals("Third Book")));
     }
 }
