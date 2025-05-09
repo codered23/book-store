@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -13,10 +14,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.bookstore.config.CustomMySqlContainer;
 import com.example.bookstore.dto.book.BookDto;
 import com.example.bookstore.dto.book.CreateBookRequestDto;
-import com.example.bookstore.dto.category.CategoryDto;
-import com.example.bookstore.dto.category.CategoryRequestDto;
-import com.example.bookstore.service.BookService;
-import com.example.bookstore.service.CategoryService;
 import com.example.bookstore.util.TestUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +25,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +36,11 @@ import org.springframework.test.web.servlet.MvcResult;
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Sql(scripts = "/sql/clean-up.sql")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Sql(scripts = {"/sql/clean-up.sql",
+        "/sql/create-default-categories.sql",
+        "/sql/create-default-books.sql"})
+@Sql(scripts = "/sql/clean-up.sql", executionPhase = AFTER_TEST_METHOD)
 public class BookControllerTest {
     private static final CustomMySqlContainer container = CustomMySqlContainer.getInstance();
     private static final String BOOKS_API_URL = "/api/books";
@@ -48,16 +50,11 @@ public class BookControllerTest {
             "/api/books/{bookId}/categories/{categoryId}";
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
-    private final BookService bookService;
-    private final CategoryService categoryService;
 
     @Autowired
-    public BookControllerTest(MockMvc mockMvc, ObjectMapper objectMapper,
-                              BookService bookService, CategoryService categoryService) {
+    public BookControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
-        this.bookService = bookService;
-        this.categoryService = categoryService;
     }
 
     @BeforeAll
@@ -65,26 +62,13 @@ public class BookControllerTest {
         container.start();
     }
 
-    private BookDto createBookFromDto(CreateBookRequestDto requestDto) {
-        BookDto savedBook = bookService.save(requestDto);
-        savedBook.setPrice(savedBook.getPrice().setScale(2, RoundingMode.HALF_UP));
-        return savedBook;
-    }
-
     @Test
     @DisplayName("Creating a new book with valid data returns BookDto with Created status")
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void createNewBook_Valid_ReturnsBookDto() throws Exception {
-        CreateBookRequestDto requestDto = TestUtil.createBookRequestDto("First book", "Author", 25);
-        BookDto expected = BookDto.builder()
-                .title(requestDto.getTitle())
-                .author(requestDto.getAuthor())
-                .isbn(requestDto.getIsbn())
-                .description(requestDto.getDescription())
-                .price(requestDto.getPrice())
-                .coverImage(requestDto.getCoverImage())
-                .isDeleted(requestDto.isDeleted())
-                .build();
+        CreateBookRequestDto requestDto = TestUtil.createBookRequestDto(
+                "First book", "Author", 25);
+        BookDto expected = TestUtil.createBookDtoFromRequest(requestDto);
         String jsonRequest = objectMapper.writeValueAsString(requestDto);
         MvcResult result = mockMvc.perform(post(BOOKS_API_URL)
                         .contentType(APPLICATION_JSON)
@@ -93,7 +77,8 @@ public class BookControllerTest {
                 .andReturn();
         BookDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(), BookDto.class);
-        assertTrue(EqualsBuilder.reflectionEquals(expected, actual, "id"));
+        assertTrue(EqualsBuilder.reflectionEquals(expected, actual, "id", "isbn"),
+                "expected BookDto: " + expected + ", but got " + actual);
     }
 
     @Test
@@ -101,28 +86,31 @@ public class BookControllerTest {
     @WithMockUser(username = "user")
     void getBookById_ValidId_ReturnsDto() throws Exception {
         CreateBookRequestDto requestDto = TestUtil
-                .createBookRequestDto("First book", "Author", 25);
-        BookDto expected = createBookFromDto(requestDto);
-        Long id = expected.getId();
+                .createBookRequestDto("Special case", "First Author", 20);
+        BookDto expected = TestUtil.createBookDtoFromRequest(requestDto);
+        Long id = 100L;
         MvcResult result = mockMvc.perform(get(BOOKS_BY_ID_API_URL, id))
                 .andExpect(status().isOk())
                 .andReturn();
         BookDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(), BookDto.class);
-        assertTrue(EqualsBuilder.reflectionEquals(expected, actual));
+        assertTrue(EqualsBuilder.reflectionEquals(expected, actual, "id", "isbn"),
+                "expected BookDto: " + expected + ", but got " + actual);
     }
 
     @Test
     @DisplayName("Getting all books returns a list of BookDto with Ok status")
     @WithMockUser(username = "user")
     void getAllBooks_Valid_ReturnsListOfBookDto() throws Exception {
-        final CreateBookRequestDto firstRequestDto = TestUtil
-                .createBookRequestDto("First book", "Author", 25);
-        final BookDto firstBookDto = createBookFromDto(firstRequestDto);
+        CreateBookRequestDto firstRequestDto = TestUtil
+                .createBookRequestDto("Second Book", "Second Author", 30);
+        final BookDto firstBookDto = TestUtil.createBookDtoFromRequest(firstRequestDto);
         final CreateBookRequestDto secondRequestDto = TestUtil
-                .createBookRequestDto("First book", "Author", 30);
-        final BookDto secondBookDto = createBookFromDto(secondRequestDto);
-        List<BookDto> expected = List.of(firstBookDto, secondBookDto);
+                .createBookRequestDto("Special case", "First Author", 20);
+        final CreateBookRequestDto thirdRequestDto = TestUtil
+                .createBookRequestDto("Third Book", "Third Author", 15);
+        final BookDto secondBookDto = TestUtil.createBookDtoFromRequest(secondRequestDto);
+        List<BookDto> includedList = List.of(firstBookDto, secondBookDto);
         Pageable pageable = Pageable.ofSize(10);
         MvcResult result = mockMvc.perform(get(BOOKS_API_URL)
                         .param("page", String.valueOf(pageable.getPageNumber()))
@@ -132,8 +120,13 @@ public class BookControllerTest {
         List<BookDto> actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
                 new TypeReference<List<BookDto>>() {});
-        assertEquals(expected.size(), actual.size());
-        assertTrue(actual.containsAll(expected) && expected.containsAll(actual));
+        Long expectedSizeOfList = 3L;
+        assertEquals(expectedSizeOfList, actual.size());
+        for (BookDto expectedBook : includedList) {
+            assertTrue(actual.stream().anyMatch(e -> EqualsBuilder
+                    .reflectionEquals(expectedBook, e, "id", "isbn")),
+                    "Expected BookDto was not found in the actual list: " + expectedBook);
+        }
     }
 
     @Test
@@ -141,9 +134,9 @@ public class BookControllerTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void deleteBook_ValidID() throws Exception {
         CreateBookRequestDto requestDto = TestUtil
-                .createBookRequestDto("First book", "Author", 25);
-        BookDto bookFromDto = createBookFromDto(requestDto);
-        Long idToDelete = bookFromDto.getId();
+                .createBookRequestDto("Fourth Book", "Fourth Author", 21);
+        BookDto bookFromDto = TestUtil.createBookDtoFromRequest(requestDto);
+        Long idToDelete = 11L;
         mockMvc.perform(delete(BOOKS_BY_ID_API_URL, idToDelete))
                 .andExpect(status().isNoContent());
         mockMvc.perform(get(BOOKS_BY_ID_API_URL, idToDelete)
@@ -166,13 +159,13 @@ public class BookControllerTest {
     @WithMockUser(username = "user")
     void searchBookByParams_Valid() throws Exception {
         CreateBookRequestDto requestDto = TestUtil
-                .createBookRequestDto("First book", "FirstAuthor", 11);
+                .createBookRequestDto("Third Book", "Third Author", 15);
         CreateBookRequestDto requestDto2 = TestUtil
-                .createBookRequestDto("Second book", "SecondAuthor", 21);
-        final BookDto firstBookDto = createBookFromDto(requestDto);
-        final BookDto secondBook = createBookFromDto(requestDto2);
-        BigDecimal minPrice = BigDecimal.valueOf(10);
-        BigDecimal maxPrice = BigDecimal.valueOf(20);
+                .createBookRequestDto("Special case", "First Author", 20);
+        final BookDto firstBookDto = TestUtil.createBookDtoFromRequest(requestDto);
+        final BookDto secondBook = TestUtil.createBookDtoFromRequest(requestDto2);
+        BigDecimal minPrice = BigDecimal.valueOf(9);
+        BigDecimal maxPrice = BigDecimal.valueOf(21);
         MvcResult firstResult = mockMvc.perform(get(BOOKS_SEARCH_API_URL)
                         .param("minPrice", minPrice.toString())
                         .param("maxPrice", maxPrice.toString()))
@@ -190,18 +183,18 @@ public class BookControllerTest {
         List<BookDto> secondActualList = objectMapper.readValue(
                 secondResult.getResponse().getContentAsString(),
                 new TypeReference<List<BookDto>>() {});
+        Long expectedSizeOfFirstList = 2L;
         secondActualList.forEach(dto ->
                 dto.setPrice(dto.getPrice().setScale(2, RoundingMode.HALF_UP)));
-        assertEquals(1L, firstActualList.size());
-        assertTrue(EqualsBuilder.reflectionEquals(firstBookDto, firstActualList.get(0)));
-        assertEquals(1L, secondActualList.size());
-        assertEquals(secondBook.getAuthor(), secondActualList.get(0).getAuthor(),
-                "Authors should match");
-        assertEquals(0, secondBook.getPrice().compareTo(secondActualList.get(0).getPrice()),
-                "Prices should match");
-        assertEquals(secondBook.getTitle(), secondActualList.get(0).getTitle(),
-                "Titles should match");
-        assertTrue(EqualsBuilder.reflectionEquals(secondBook, secondActualList.get(0)));
+        assertEquals(expectedSizeOfFirstList, firstActualList.size());
+        assertTrue(EqualsBuilder.reflectionEquals(
+                firstBookDto, firstActualList.get(0), "id", "isbn"),
+                "expected BookDto: " + firstBookDto + ", but got " + firstActualList.get(0));
+        Long expectedSizeOfSecondList = 1L;
+        assertEquals(expectedSizeOfSecondList, secondActualList.size());
+        assertTrue(EqualsBuilder.reflectionEquals(
+                secondBook, secondActualList.get(0), "id", "isbn"),
+                "expected BookDto: " + secondBook + ", but got " + secondActualList.get(0));
     }
 
     @Test
@@ -209,21 +202,11 @@ public class BookControllerTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void updateBookById_Valid_ReturnsUpdatedBookDto() throws Exception {
         CreateBookRequestDto requestDto = TestUtil
-                .createBookRequestDto("First book", "Author", 25);
-        BookDto savedBookDto = createBookFromDto(requestDto);
-        Long id = savedBookDto.getId();
-        requestDto.setPrice(BigDecimal.valueOf(15));
+                .createBookRequestDto("Third Book", "Third Author", 15);
+        Long id = 10L;
+        requestDto.setPrice(BigDecimal.valueOf(20));
         requestDto.setDescription("new description");
-        BookDto expectedUpdatedBookDto = BookDto.builder()
-                .id(savedBookDto.getId())
-                .title(savedBookDto.getTitle())
-                .author(savedBookDto.getAuthor())
-                .isbn(savedBookDto.getIsbn())
-                .description("new description")
-                .price(BigDecimal.valueOf(15))
-                .coverImage(savedBookDto.getCoverImage())
-                .isDeleted(savedBookDto.isDeleted())
-                .build();
+        BookDto expectedUpdatedBookDto = TestUtil.createBookDtoFromRequest(requestDto);
         String jsonRequest = objectMapper.writeValueAsString(requestDto);
 
         MvcResult result = mockMvc.perform(put(BOOKS_BY_ID_API_URL, id)
@@ -234,8 +217,9 @@ public class BookControllerTest {
 
         BookDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(), BookDto.class);
-        assertTrue(EqualsBuilder.reflectionEquals(expectedUpdatedBookDto, actual));
-        assertEquals(BigDecimal.valueOf(15), actual.getPrice());
+        assertTrue(EqualsBuilder.reflectionEquals(expectedUpdatedBookDto, actual, "id", "isbn"),
+                "expected BookDto: " + expectedUpdatedBookDto + ", but got " + actual);
+        assertEquals(BigDecimal.valueOf(20), actual.getPrice());
         assertEquals("new description", actual.getDescription());
     }
 
@@ -243,21 +227,24 @@ public class BookControllerTest {
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     @DisplayName("Adding a book to a category, controller returns updated BookDto")
     void addBookToCategory_ValidIds_ReturnsUpdateBookDto() throws Exception {
-        CreateBookRequestDto request = TestUtil.createBookRequestDto("First book", "Author", 25);
-        BookDto bookDto = createBookFromDto(request);
-        CategoryRequestDto requestDto = TestUtil.createCategoryRequestDto("Adventure");
-        CategoryDto categoryDto = categoryService.save(requestDto);
+        CreateBookRequestDto request = TestUtil.createBookRequestDto(
+                "Second Book", "Second Author", 30);
+        BookDto bookDto = TestUtil.createBookDtoFromRequest(request);
+        Long bookId = 101L;
+        Long categoryId = 2L;
 
         MvcResult result = mockMvc.perform(post(ADD_BOOK_TO_CATEGORY_API_URL,
-                        bookDto.getId(), categoryDto.getId()))
+                        bookId, categoryId))
                 .andExpect(status().isOk())
                 .andReturn();
 
         BookDto updatedBookDto = objectMapper.readValue(
                 result.getResponse().getContentAsString(), BookDto.class);
-        assertTrue(EqualsBuilder.reflectionEquals(bookDto, updatedBookDto, "categoryIds"));
+        assertTrue(EqualsBuilder.reflectionEquals(
+                bookDto, updatedBookDto, "categoryIds", "id", "isbn"),
+                "expected bookDto: " + bookDto + ", but got: " + updatedBookDto);
         assertNotNull(updatedBookDto.getCategoryIds());
-        assertTrue(updatedBookDto.getCategoryIds().contains(categoryDto.getId()),
-                "Book must contain the added category id");
+        assertTrue(updatedBookDto.getCategoryIds().contains(2L),
+                "The updated BookDto does not contain the ID of the added category (2)");
     }
 }

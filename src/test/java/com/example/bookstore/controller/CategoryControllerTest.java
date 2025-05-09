@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,13 +12,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.bookstore.config.CustomMySqlContainer;
-import com.example.bookstore.dto.book.BookDto;
 import com.example.bookstore.dto.book.BookDtoWithoutCategoryIds;
 import com.example.bookstore.dto.book.CreateBookRequestDto;
 import com.example.bookstore.dto.category.CategoryDto;
 import com.example.bookstore.dto.category.CategoryRequestDto;
-import com.example.bookstore.service.BookService;
-import com.example.bookstore.service.CategoryService;
 import com.example.bookstore.util.TestUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +34,11 @@ import org.springframework.test.web.servlet.MvcResult;
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Sql(scripts = "/sql/clean-up.sql")
+@Sql(scripts = {"/sql/clean-up.sql",
+        "/sql/create-default-categories.sql",
+        "/sql/create-default-books.sql",
+        "/sql/add-default-book-categories.sql"})
+@Sql(scripts = "/sql/clean-up.sql", executionPhase = AFTER_TEST_METHOD)
 public class CategoryControllerTest {
     private static final CustomMySqlContainer container = CustomMySqlContainer.getInstance();
     private static final String CATEGORIES_API_URL = "/api/categories";
@@ -45,16 +47,11 @@ public class CategoryControllerTest {
 
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
-    private final CategoryService categoryService;
-    private final BookService bookService;
 
     @Autowired
-    public CategoryControllerTest(MockMvc mockMvc, ObjectMapper objectMapper,
-                                  CategoryService categoryService, BookService bookService) {
+    public CategoryControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
-        this.categoryService = categoryService;
-        this.bookService = bookService;
     }
 
     @BeforeAll
@@ -83,19 +80,20 @@ public class CategoryControllerTest {
         CategoryDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(), CategoryDto.class);
         assertNotNull(actual.getId());
-        assertTrue(EqualsBuilder.reflectionEquals(expectedCategory, actual, "id"));
+        assertTrue(EqualsBuilder.reflectionEquals(expectedCategory, actual, "id"),
+                "Expected created category: " + expectedCategory + ", but got: " + actual);
     }
 
     @Test
     @DisplayName("Getting all categories returns a list of CategoryDto with Ok status")
     @WithMockUser(username = "user")
     void getAllCategories_Valid_ReturnsListOfCategoryDto() throws Exception {
-        CategoryRequestDto firstRequest = TestUtil.createCategoryRequestDto("Fantasy");
-        CategoryRequestDto secondRequest = TestUtil.createCategoryRequestDto("Roman");
+        CategoryRequestDto firstRequest = TestUtil.createCategoryRequestDto("Fiction");
+        CategoryRequestDto secondRequest = TestUtil.createCategoryRequestDto("Popular");
         CategoryRequestDto thirdRequest = TestUtil.createCategoryRequestDto("Adventure");
-        CategoryDto firstDto = categoryService.save(firstRequest);
-        CategoryDto secondDto = categoryService.save(secondRequest);
-        CategoryDto thirdDto = categoryService.save(thirdRequest);
+        CategoryDto firstDto = TestUtil.createCategoryDtoFromRequest(firstRequest);
+        CategoryDto secondDto = TestUtil.createCategoryDtoFromRequest(secondRequest);
+        CategoryDto thirdDto = TestUtil.createCategoryDtoFromRequest(thirdRequest);
         List<CategoryDto> expectedList = List.of(firstDto, secondDto, thirdDto);
 
         MvcResult result = mockMvc.perform(get(CATEGORIES_API_URL))
@@ -110,8 +108,8 @@ public class CategoryControllerTest {
         for (CategoryDto expected : expectedList) {
             assertTrue(
                     actualList.stream().anyMatch(
-                            actual -> EqualsBuilder.reflectionEquals(actual, expected)),
-                    "Expected category not found: " + expected.getName()
+                            actual -> EqualsBuilder.reflectionEquals(actual, expected, "id")),
+                    "Expected category not found: " + expected
             );
         }
     }
@@ -120,32 +118,32 @@ public class CategoryControllerTest {
     @DisplayName("Getting a category by a valid ID returns CategoryDto with Ok status")
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void getCategoryById_Valid_ReturnsCategoryDto() throws Exception {
-        CategoryRequestDto requestDto = TestUtil.createCategoryRequestDto("Special");
-        CategoryDto expectedDto = categoryService.save(requestDto);
-        Long id = expectedDto.getId();
+        CategoryRequestDto requestDto = TestUtil.createCategoryRequestDto("Adventure");
+        CategoryDto expectedDto = TestUtil.createCategoryDtoFromRequest(requestDto);
+        Long categoryId = 2L;
 
-        MvcResult result = mockMvc.perform(get(CATEGORY_BY_ID_API_URL, id))
+        MvcResult result = mockMvc.perform(get(CATEGORY_BY_ID_API_URL, categoryId))
                 .andExpect(status().isOk())
                 .andReturn();
 
         CategoryDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(), CategoryDto.class);
 
-        assertTrue(EqualsBuilder.reflectionEquals(expectedDto, actual));
+        assertTrue(EqualsBuilder.reflectionEquals(expectedDto, actual, "id"),
+                "Expected category: " + expectedDto + ", but got: " + actual);
     }
 
     @Test
     @DisplayName("Updating a valid category by ID returns the updated CategoryDto with Ok status")
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void updateCategoryById_Valid_ReturnsUpdatedCategoryDto() throws Exception {
-        CategoryRequestDto requestDto = TestUtil.createCategoryRequestDto("Roman");
-        CategoryDto dto = categoryService.save(requestDto);
-        requestDto.setName("Roman-Adventure");
-        dto.setName("Roman-Adventure");
+        CategoryRequestDto requestDto = TestUtil.createCategoryRequestDto("Roman-Adventure");
+        requestDto.setDescription("involves supernatural or magical elements");
+        CategoryDto dto = TestUtil.createCategoryDtoFromRequest(requestDto);
 
         String updatedRequestJson = objectMapper.writeValueAsString(requestDto);
 
-        MvcResult result = mockMvc.perform(put(CATEGORY_BY_ID_API_URL, dto.getId())
+        MvcResult result = mockMvc.perform(put(CATEGORY_BY_ID_API_URL, 1L)
                         .contentType(APPLICATION_JSON)
                         .content(updatedRequestJson))
                 .andExpect(status().isOk())
@@ -153,7 +151,8 @@ public class CategoryControllerTest {
 
         CategoryDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(), CategoryDto.class);
-        assertTrue(EqualsBuilder.reflectionEquals(dto, actual));
+        assertTrue(EqualsBuilder.reflectionEquals(dto, actual, "id"),
+                "Expected updated category: " + dto + ", but got: " + actual);
     }
 
     @Test
@@ -161,14 +160,14 @@ public class CategoryControllerTest {
             + "NoContent status and the category is not found")
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void deleteCategoryById_Valid() throws Exception {
-        CategoryRequestDto requestDto = TestUtil.createCategoryRequestDto("Fantasy");
-        CategoryDto category = categoryService.save(requestDto);
-        Long id = category.getId();
+        Long categoryId = 2L;
+        mockMvc.perform(get(CATEGORY_BY_ID_API_URL, categoryId))
+                .andExpect(status().isOk());
 
-        mockMvc.perform(delete(CATEGORY_BY_ID_API_URL, id))
+        mockMvc.perform(delete(CATEGORY_BY_ID_API_URL, categoryId))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get(CATEGORY_BY_ID_API_URL, id))
+        mockMvc.perform(get(CATEGORY_BY_ID_API_URL, categoryId))
                 .andExpect(status().isNotFound());
 
         MvcResult getAllResult = mockMvc.perform(get(CATEGORIES_API_URL))
@@ -179,7 +178,8 @@ public class CategoryControllerTest {
                 getAllResult.getResponse().getContentAsString(),
                 new TypeReference<List<CategoryDto>>() {});
         assertTrue(categoryDtoList.stream().noneMatch(
-                categoryDto -> categoryDto.getId().equals(id)));
+                categoryDto -> categoryDto.getId().equals(categoryId)),
+                "Expected category exist in return list: categoryId: " + categoryId);
     }
 
     @Test
@@ -187,23 +187,24 @@ public class CategoryControllerTest {
             + "a list of BookDtoWithoutCategoryIds with Ok status")
     @WithMockUser(username = "user")
     void getBooksByCategoryId() throws Exception {
-
         CreateBookRequestDto firstRequestDto = TestUtil
-                .createBookRequestDto("Effective Java 3", "Joshua Bloch", 25);
+                .createBookRequestDto("Second Book", "Second Author", 30);
         CreateBookRequestDto secondRequestDto = TestUtil
-                .createBookRequestDto("Design patterns", "Richard Henrich", 30);
+                .createBookRequestDto("Third Book", "Third Author", 15);
+        CreateBookRequestDto thirdRequestDto = TestUtil
+                .createBookRequestDto("Special case", "First Author", 20);
+        BookDtoWithoutCategoryIds firstBook = TestUtil
+                .createBookDtoWithoutCategoryIdsFromRequest(firstRequestDto);
+        BookDtoWithoutCategoryIds secondBook = TestUtil
+                .createBookDtoWithoutCategoryIdsFromRequest(secondRequestDto);
+        BookDtoWithoutCategoryIds thirdBook = TestUtil
+                .createBookDtoWithoutCategoryIdsFromRequest(thirdRequestDto);
+        List<BookDtoWithoutCategoryIds> expectedList = List.of(firstBook, secondBook, thirdBook);
 
-        BookDto firstBook = bookService.save(firstRequestDto);
-        BookDto secondBook = bookService.save(secondRequestDto);
-        Long expectedSizeOfList = 2L;
+        Long expectedSizeOfList = 3L;
+        Long categoryId = 3L;
 
-        CategoryDto categoryDto = categoryService.save(TestUtil
-                .createCategoryRequestDto("Temporary"));
-
-        bookService.addBookToCategory(firstBook.getId(), categoryDto.getId());
-        bookService.addBookToCategory(secondBook.getId(), categoryDto.getId());
-
-        MvcResult result = mockMvc.perform(get(CATEGORY_BOOKS_API_URL, categoryDto.getId()))
+        MvcResult result = mockMvc.perform(get(CATEGORY_BOOKS_API_URL, categoryId))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -212,9 +213,10 @@ public class CategoryControllerTest {
                 new TypeReference<List<BookDtoWithoutCategoryIds>>() {});
 
         assertEquals(expectedSizeOfList, actualList.size());
-        assertEquals(firstBook.getAuthor(), actualList.get(0).getAuthor());
-        assertEquals(secondBook.getAuthor(), actualList.get(1).getAuthor());
-        assertEquals(firstBook.getTitle(), actualList.get(0).getTitle());
-        assertEquals(secondBook.getTitle(), actualList.get(1).getTitle());
+        for (BookDtoWithoutCategoryIds expectedBook : expectedList) {
+            assertTrue(actualList.stream().anyMatch(e -> EqualsBuilder.reflectionEquals(
+                    e, expectedBook, "id", "isbn")),
+                    "Expected category not found: " + expectedBook.getTitle());
+        }
     }
 }
