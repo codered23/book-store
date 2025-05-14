@@ -9,6 +9,7 @@ import com.example.bookstore.model.Book;
 import com.example.bookstore.model.Category;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.UUID;
 
 public class TestUtil {
@@ -94,5 +95,41 @@ public class TestUtil {
         cat.setName(categoryRequestDto.getName());
         cat.setDescription(categoryRequestDto.getDescription());
         return cat;
+    }
+
+    public static List<CategoryDto> getAllCategoryDto() {
+        CategoryRequestDto firstRequest = TestUtil.createCategoryRequestDto("Fiction");
+        CategoryRequestDto secondRequest = TestUtil.createCategoryRequestDto("Popular");
+        CategoryRequestDto thirdRequest = TestUtil.createCategoryRequestDto("Adventure");
+        CategoryDto firstDto = TestUtil.createCategoryDtoFromRequest(firstRequest);
+        CategoryDto secondDto = TestUtil.createCategoryDtoFromRequest(secondRequest);
+        CategoryDto thirdDto = TestUtil.createCategoryDtoFromRequest(thirdRequest);
+        return List.of(firstDto, secondDto, thirdDto);
+    }
+
+    public static List<Category> getAllCategory() {
+        CategoryRequestDto firstRequest = TestUtil.createCategoryRequestDto("Fiction");
+        CategoryRequestDto secondRequest = TestUtil.createCategoryRequestDto("Popular");
+        CategoryRequestDto thirdRequest = TestUtil.createCategoryRequestDto("Adventure");
+        Category firstDto = TestUtil.createCategory(firstRequest);
+        Category secondDto = TestUtil.createCategory(secondRequest);
+        Category thirdDto = TestUtil.createCategory(thirdRequest);
+        return List.of(firstDto, secondDto, thirdDto);
+    }
+
+    public static List<BookDtoWithoutCategoryIds> getAllBookDtoWithoutCategoryIds() {
+        CreateBookRequestDto firstRequestDto = TestUtil
+                .createBookRequestDto("Second Book", "Second Author", 30);
+        CreateBookRequestDto secondRequestDto = TestUtil
+                .createBookRequestDto("Third Book", "Third Author", 15);
+        CreateBookRequestDto thirdRequestDto = TestUtil
+                .createBookRequestDto("Special case", "First Author", 20);
+        BookDtoWithoutCategoryIds firstBook = TestUtil
+                .createBookDtoWithoutCategoryIdsFromRequest(firstRequestDto);
+        BookDtoWithoutCategoryIds secondBook = TestUtil
+                .createBookDtoWithoutCategoryIdsFromRequest(secondRequestDto);
+        BookDtoWithoutCategoryIds thirdBook = TestUtil
+                .createBookDtoWithoutCategoryIdsFromRequest(thirdRequestDto);
+        return List.of(firstBook, secondBook, thirdBook);
     }
 }

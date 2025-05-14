@@ -2,17 +2,16 @@ package com.example.bookstore.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
 import com.example.bookstore.config.CustomMySqlContainer;
 import com.example.bookstore.dto.book.CreateBookRequestDto;
-import com.example.bookstore.dto.category.CategoryRequestDto;
 import com.example.bookstore.model.Book;
-import com.example.bookstore.model.Category;
+import com.example.bookstore.repository.specifications.provider.AuthorSpecificationProvider;
 import com.example.bookstore.repository.specifications.provider.PriceSpecificationProvider;
 import com.example.bookstore.util.TestUtil;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.jupiter.api.BeforeAll;
@@ -33,20 +32,19 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Sql(scripts = "/sql/clean-up.sql")
+@Sql(scripts = {"/sql/clean-up.sql",
+        "/sql/create-default-categories.sql",
+        "/sql/create-default-books.sql",
+        "/sql/add-default-book-categories.sql"})
+@Sql(scripts = "/sql/clean-up.sql", executionPhase = AFTER_TEST_METHOD)
 class BookRepositoryTest {
     private static final CustomMySqlContainer container = CustomMySqlContainer.getInstance();
     private final BookRepository bookRepository;
-    private final CategoryRepository categoryRepository;
     private final List<Book> books = new ArrayList<>();
-    private Long romanCategoryId;
-    private Long fantasyCategoryId;
 
     @Autowired
-    public BookRepositoryTest(BookRepository bookRepository,
-                              CategoryRepository categoryRepository) {
+    public BookRepositoryTest(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
-        this.categoryRepository = categoryRepository;
     }
 
     @BeforeAll
@@ -56,60 +54,80 @@ class BookRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        CategoryRequestDto requestDto = TestUtil.createCategoryRequestDto("Roman");
-        Category firstCategory = TestUtil.createCategory(requestDto);
-        romanCategoryId = categoryRepository.save(firstCategory).getId();
-
-        CategoryRequestDto secondRequestDto = TestUtil.createCategoryRequestDto("Fantasy");
-        Category secondCategory = TestUtil.createCategory(secondRequestDto);
-
-        fantasyCategoryId = categoryRepository.save(secondCategory).getId();
-
-        Book firstBook = createBook("First Book", "Joshua", firstCategory, 11);
-        Book secondBook = createBook("Second Book", "Bloch", secondCategory, 15);
-        Book thirdBook = createBook("Third Book", "Artur", secondCategory, 20);
-
+        CreateBookRequestDto firstRequestDto = TestUtil.createBookRequestDto(
+                "Special case", "First Author", 20);
+        CreateBookRequestDto secondRequestDto = TestUtil.createBookRequestDto(
+                "Second Book", "Second Author", 30);
+        CreateBookRequestDto thirdRequestDto = TestUtil.createBookRequestDto(
+                "Third Book", "Third Author", 15);
+        Book firstBook = TestUtil.createBook(firstRequestDto);
+        Book secondBook = TestUtil.createBook(secondRequestDto);
+        Book thirdBook = TestUtil.createBook(thirdRequestDto);
         books.addAll(List.of(firstBook, secondBook, thirdBook));
-    }
-
-    private Book createBook(String title, String author, Category category, int price) {
-        CreateBookRequestDto bookRequestDto = TestUtil.createBookRequestDto(title, author, price);
-        Book book = TestUtil.createBook(bookRequestDto);
-        book.setCategories(new HashSet<>(List.of(category)));
-        return bookRepository.save(book);
     }
 
     @Test
     @DisplayName("Finding all books with price specification returns the correct book")
-    void findAllWithPriceSpecification() {
+    void findAllWithValidPriceSpecification() {
         Specification<Book> bookSpecification = PriceSpecificationProvider.getSpecification(
-                BigDecimal.valueOf(10), BigDecimal.valueOf(12));
+                BigDecimal.valueOf(10), BigDecimal.valueOf(17));
         Pageable pageable = PageRequest.of(0, 5);
+
         Page<Book> all = bookRepository.findAll(bookSpecification, pageable);
 
         int actualTotalPages = all.getTotalPages();
         assertEquals(1, actualTotalPages);
-        long actualCountOfBooks = all.get().count();
+        Long actualCountOfBooks = all.get().count();
         assertEquals(1L, actualCountOfBooks);
-        assertTrue(all.get().anyMatch(dto -> EqualsBuilder.reflectionEquals(dto, books.get(0))));
+        int indexOfBook = 2;
+        assertTrue(all.get().anyMatch(dto ->
+                EqualsBuilder.reflectionEquals(dto, books.get(indexOfBook),
+                        "id", "isbn", "categories")));
     }
 
     @Test
-    @DisplayName("Finding all books by Roman category ID returns the correct books")
-    void findAllByRomanCategoryId() {
-        List<Book> allByCategoriesId = bookRepository.findAllByCategoriesId(romanCategoryId);
-        assertEquals(1, allByCategoriesId.size());
-        assertEquals(allByCategoriesId.get(0).getTitle(), "First Book");
+    @DisplayName("Finding all books by Popular category ID returns the correct books")
+    void findAllByValidCategoryId() {
+        Long popularCategoryId = 3L;
+
+        List<Book> allByCategoriesId = bookRepository.findAllByCategoriesId(popularCategoryId);
+
+        assertEquals(3, allByCategoriesId.size());
+        for (Book book : books) {
+            assertTrue(allByCategoriesId.stream()
+                    .anyMatch(e -> EqualsBuilder.reflectionEquals(e, book,
+                            "id", "isbn", "categories")));
+        }
     }
 
     @Test
     @DisplayName("Finding all books by Fantasy category ID returns the correct book")
-    void findAllByFantasyCategoryId() {
-        List<Book> allByCategoriesId = bookRepository.findAllByCategoriesId(fantasyCategoryId);
-        assertEquals(2, allByCategoriesId.size());
-        assertTrue(allByCategoriesId.stream().anyMatch(book ->
-                book.getTitle().equals("Second Book")));
-        assertTrue(allByCategoriesId.stream().anyMatch(book ->
-                book.getTitle().equals("Third Book")));
+    void findAllByNoValidCategoryId() {
+        Long adventureCategoryId = 5L;
+
+        List<Book> allByCategoriesId = bookRepository.findAllByCategoriesId(
+                adventureCategoryId);
+
+        assertTrue(allByCategoriesId.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Finding all books with author specification returns correct books")
+    void findAllWithValidAuthorSpecification() {
+        String[] authors = new String[]{"First Author"};
+        Specification<Book> bookSpecification = AuthorSpecificationProvider
+                .getSpecification(authors);
+        Pageable pageable = PageRequest.of(0, 5);
+
+        Page<Book> all = bookRepository.findAll(bookSpecification, pageable);
+
+        int actualTotalPages = all.getTotalPages();
+        assertEquals(1, actualTotalPages);
+        Long actualCountOfBooks = all.get().count();
+        assertEquals(1L, actualCountOfBooks);
+        int indexOfBook = 0;
+        assertTrue(all.get().anyMatch(dto ->
+                EqualsBuilder.reflectionEquals(dto, books.get(indexOfBook),
+                        "id", "isbn", "categories")));
     }
 }
