@@ -16,13 +16,13 @@ public class BookSpecificationBuilder implements SpecificationBuilder<Book> {
         if (searchParameters.getAuthors() != null && searchParameters.getAuthors().length > 0) {
             spec = spec.and(AuthorSpecificationProvider
                     .getSpecification(searchParameters.getAuthors()));
-
         }
         if (searchParameters.getMinPrice() != null && searchParameters.getMaxPrice() != null) {
             BigDecimal minPrice = searchParameters.getMinPrice();
             BigDecimal maxPrice = searchParameters.getMaxPrice();
             if (minPrice.compareTo(BigDecimal.ZERO) >= 0
-                    && maxPrice.compareTo(BigDecimal.ZERO) >= 0) {
+                    && maxPrice.compareTo(BigDecimal.ZERO) >= 0
+                    && maxPrice.compareTo(minPrice) >= 0) {
                 spec = spec.and(PriceSpecificationProvider
                         .getSpecification(minPrice, maxPrice));
             } else {
