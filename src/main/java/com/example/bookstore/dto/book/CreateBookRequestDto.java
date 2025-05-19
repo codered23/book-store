@@ -21,5 +21,6 @@ public class CreateBookRequestDto {
     private String isbn;
     private String description;
     private String coverImage;
+    @Builder.Default
     private boolean isDeleted = false;
 }

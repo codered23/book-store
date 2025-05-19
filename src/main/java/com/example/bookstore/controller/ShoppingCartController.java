@@ -56,8 +56,8 @@ public class ShoppingCartController {
     }
 
     @DeleteMapping("/cart-items/{id}")
-    @Operation(summary = "Get all books by category",
-            description = "Return list of books by similar category")
+    @Operation(summary = "Remove cart-item by id",
+            description = "Remove an item from the shopping cart")
     public ResponseEntity<ShoppingCartDto> getBooksByCategoryId(@PathVariable Long id,
                                                 Authentication authentication) {
         ShoppingCartDto shoppingCartDto = shoppingCartService.deleteCartItem(id, authentication);

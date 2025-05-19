@@ -33,7 +33,6 @@ public class JwtUtil {
 
     public boolean isValidToken(String token) {
         if (token == null || token.isEmpty()) {
-            // Токен відсутній, вважаємо його недійсним
             return false;
         }
         try {

@@ -33,7 +33,7 @@ public class AuthentiactionServiceImpl implements AuthenticationService {
     public UserRegistrationResponseDto register(UserRegistrationRequestDto requestDto) {
         if (userRepository.findByEmail(requestDto.getEmail()).isPresent()) {
             throw new RegistrationException(
-                    "Unable to complete registration");
+                    "Unable to complete registration, account with your email already exist");
         }
         User user = userMapper.toModel(requestDto);
         user.setPassword(encoder.encode(user.getPassword()));
